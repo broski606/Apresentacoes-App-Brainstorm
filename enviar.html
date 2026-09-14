@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Enviar palavra</title>
+<style>
+  :root{
+    --bg: #0B0F14;
+    --surface: #131A22;
+    --border: #24303C;
+    --text: #E5EAF0;
+    --muted: #7C8A9A;
+    --green: #6EE7A8;
+    --pink: #F472B6;
+    --blue: #7DD3FC;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+  }
+  body{padding:20px;}
+  .window{
+    width:100%;max-width:420px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .titlebar{
+    display:flex;align-items:center;gap:8px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.r{background:#F87171;}
+  .dot.y{background:#FBBF24;}
+  .dot.g{background:#34D399;}
+  .titlebar span{
+    margin-left:8px;
+    font-family:ui-monospace,"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+    font-size:13px;color:var(--muted);
+  }
+  .content{padding:28px 24px 24px;}
+  .prompt{
+    font-family:ui-monospace,"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+    font-size:14px;color:var(--green);margin:0 0 6px;
+  }
+  h1{
+    font-size:21px;line-height:1.35;font-weight:600;
+    margin:0 0 22px;color:var(--text);
+  }
+  textarea{
+    width:100%;min-height:84px;resize:none;
+    background:#0E141B;border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-size:17px;font-family:inherit;padding:14px;
+    outline:none;transition:border-color .15s;
+  }
+  textarea:focus{border-color:var(--blue);}
+  .meta{
+    display:flex;justify-content:space-between;align-items:center;margin-top:8px;
+    font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);
+  }
+  button{
+    width:100%;margin-top:18px;padding:14px;border:none;border-radius:8px;
+    background:var(--green);color:#08130D;font-size:16px;font-weight:600;
+    font-family:inherit;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:transform .1s,opacity .15s;
+  }
+  button:active{transform:scale(.98);}
+  button:disabled{opacity:.5;cursor:default;}
+  .status{
+    margin-top:14px;min-height:20px;text-align:center;font-size:14px;
+    font-family:ui-monospace,monospace;
+  }
+  .status.ok{color:var(--green);}
+  .status.err{color:var(--pink);}
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+    <span>sessao.enviar</span>
+  </div>
+  <div class="content">
+    <p class="prompt">&gt; escreve a tua ideia</p>
+    <h1>Que palavra ou frase associas ao que estamos a ver?</h1>
+    <textarea id="campo" maxlength="50" placeholder="ex: recursividade" autofocus></textarea>
+    <div class="meta">
+      <span id="contador">0/50</span>
+      <span>uma de cada vez</span>
+    </div>
+    <button id="btn">▶ Enviar</button>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<script>
+  const campo = document.getElementById('campo');
+  const contador = document.getElementById('contador');
+  const btn = document.getElementById('btn');
+  const status = document.getElementById('status');
+  const LIMITE = 50;
+
+  campo.addEventListener('input', () => {
+    contador.textContent = campo.value.length + '/' + LIMITE;
+  });
+
+  campo.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      enviar();
+    }
+  });
+
+  btn.addEventListener('click', enviar);
+
+  async function enviar(){
+    const texto = campo.value.trim();
+    if(!texto){
+      mostrarStatus('Escreve algo primeiro.', 'err');
+      return;
+    }
+    btn.disabled = true;
+    mostrarStatus('a enviar...', '');
+    try{
+      const resp = await fetch('/enviar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ texto })
+      });
+      if(!resp.ok) throw new Error('erro no envio');
+      campo.value = '';
+      contador.textContent = '0/' + LIMITE;
+      mostrarStatus('✓ enviado, obrigado!', 'ok');
+    }catch(err){
+      mostrarStatus('não foi possível enviar. tenta outra vez.', 'err');
+    }finally{
+      btn.disabled = false;
+      campo.focus();
+    }
+  }
+
+  function mostrarStatus(msg, tipo){
+    status.textContent = msg;
+    status.className = 'status ' + tipo;
+    if(tipo === 'ok'){
+      setTimeout(() => { if(status.textContent === msg) status.textContent = ''; }, 2500);
+    }
+  }
+</script>
+</body>
+</html>
