@@ -39,6 +39,16 @@ O PC corre um pequeno servidor que serve duas páginas:
 
 ---
 
+## 📦 Instalação
+
+```bash
+pip install flask "qrcode[pil]"
+```
+
+> ⚠️ **Atenção:** instala sempre `qrcode[pil]`, e não apenas `qrcode`. Sem o extra `[pil]`, falta a biblioteca Pillow (usada para gerar a imagem do QR code) e a geração do `/qrcode.png` falha noutras máquinas onde o Pillow não esteja já instalado por outra dependência.
+
+---
+
 ## 🚀 Como usar
 
 1. Liga o PC à mesma rede Wi-Fi da sala.
